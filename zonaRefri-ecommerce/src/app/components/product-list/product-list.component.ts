@@ -3,6 +3,7 @@ import { Product } from '../../common/product';
 import { ProductService } from '../../services/product.service';
 import { ActivatedRoute } from '@angular/router';
 import { ThisReceiver } from '@angular/compiler';
+import { ProductSubcategory } from '../../common/product-subcategory';
 
 
 @Component({
@@ -14,6 +15,8 @@ import { ThisReceiver } from '@angular/compiler';
 export class ProductListComponent implements OnInit {
 
   products: Product[] = [];
+  listproductos:Product[] = [];
+  subCategorias: ProductSubcategory[]=[];
   currentCategoryId: number= 1;
   
   constructor(private productService: ProductService,
@@ -23,11 +26,11 @@ export class ProductListComponent implements OnInit {
 
   ngOnInit() {
     this.route.paramMap.subscribe(()=>{
-      this.listProducts();
+      this.listProductsSubcategorias();
     })
   }
 
-  listProducts() {
+  listProductsSubcategorias() {
 //CHEQUEA ID ENVIADO POR PARAMETRO
     const hasCategoryId: boolean =this.route.snapshot.paramMap.has('id');
     if(hasCategoryId){
@@ -38,10 +41,31 @@ export class ProductListComponent implements OnInit {
       //SI NO HAY ID ENVIADO POR PARAMETRO por defecto deja el id =1
       this.currentCategoryId =1;
     }
-    //DEVOLVER PRODUCTO A BASE DEL ID ENVIADO POR PARAMETRO
-    this.productService.getProductList(this.currentCategoryId).subscribe(
+    //DEVOLVER SUBCATEGORIAS A BASE DEL ID ENVIADO POR PARAMETRO
+    this.productService.getProductSubCategriesId(this.currentCategoryId).subscribe(
       data => {
-        this.products = data;
+        
+        this.listproductos=[];
+        this.subCategorias = data;
+        this.subCategorias.forEach(element => {
+          console.log(element.id);
+           //DEVOLVER PRODUCTOS A BASE DEL ID ENVIADO POR PARAMETRO
+          this.listarProductos(element.id);
+          
+        });
+      }
+    )
+  }
+
+  //DEVOLVER PRODUCTOS A BASE DEL ID ENVIADO POR PARAMETRO
+  listarProductos(subcategoriaid:number){
+    this.productService.getProductList(subcategoriaid).subscribe(
+      data => {
+        console.log('Productossssssssss='+ JSON.stringify(data));
+        this.products=data
+        Array.prototype.push.apply(this.listproductos, this.products);
+        console.log(this.listproductos);
+       
       }
     )
   }
