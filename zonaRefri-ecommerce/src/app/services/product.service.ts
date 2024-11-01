@@ -10,6 +10,7 @@ import { ProductCategory } from '../common/product-category';
   providedIn: 'root'
 })
 export class ProductService {
+
   
   
 
@@ -23,10 +24,23 @@ export class ProductService {
     //construir url basado en categoryId 
     const searchUrl = `${this.baseUrl}/search/findBySubCategoryId?id=${theCategoryId}`;
 
+    return this.getProducts(searchUrl);
+  }
+
+  searchProducts(theKeyword: string): Observable<Product[]> {
+        //construir url a base de keyword
+        const searchUrl = `${this.baseUrl}/search/findByNameContaining?name=${theKeyword}`;
+
+        return this.getProducts(searchUrl);
+  }
+
+  
+  private getProducts(searchUrl: string): Observable<Product[]> {
     return this.httpClient.get<GetResponse>(searchUrl).pipe(
       map(response => response._embedded.products)
     );
   }
+
   getProductSubCategriesId(theSubCategoryId: number): Observable<ProductSubcategory[]> {
     //construir url basado en categoryId 
     const searchUrl = `${this.subCategoryUrl}/search/findByCategoryId?id=${theSubCategoryId}`;
