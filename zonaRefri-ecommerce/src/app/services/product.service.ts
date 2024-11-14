@@ -25,39 +25,52 @@ export class ProductService {
     const productUrl= `${this.baseUrl}/${theProductId}`;
     return this.httpClient.get<Product>(productUrl);
   }
+  
   getProductList(theCategoryId: number): Observable<Product[]> {
     //construir url basado en categoryId 
     const searchUrl = `${this.baseUrl}/search/findBySubCategoryId?id=${theCategoryId}`;
-
+  
     return this.getProducts(searchUrl);
   }
-
-  searchProducts(theKeyword: string): Observable<Product[]> {
-        //construir url a base de keyword
-        const searchUrl = `${this.baseUrl}/search/findByNameContaining?name=${theKeyword}`;
-
-        return this.getProducts(searchUrl);
+  getProductListPaginate(thePage:number,
+                        thePageSize:number,
+                        theCategoryId: number): Observable<GetResponse> {
+    //construir url basado en categoryId 
+    const searchUrl = `${this.baseUrl}/search/buscarPorCategoria?id=${theCategoryId}`
+    + `&page=${thePage}&size=${thePageSize}`;
+    console.log('url para paginación= '+ searchUrl);                     
+    return this.httpClient.get<GetResponse>(searchUrl);
   }
-
+  
+  
+  searchProducts(theKeyword: string): Observable<Product[]> {
+    //construir url a base de keyword
+    const searchUrl = `${this.baseUrl}/search/findByNameContaining?name=${theKeyword}`;
+    
+    return this.getProducts(searchUrl);
+  }
+  
   
   private getProducts(searchUrl: string): Observable<Product[]> {
     return this.httpClient.get<GetResponse>(searchUrl).pipe(
       map(response => response._embedded.products)
     );
   }
-
+  
   getProductSubCategriesId(theSubCategoryId: number): Observable<ProductSubcategory[]> {
     //construir url basado en categoryId 
     const searchUrl = `${this.subCategoryUrl}/search/findByCategoryId?id=${theSubCategoryId}`;
-
-    console.log(searchUrl +'aca es el problema');
-
+    
+    //console.log(searchUrl +'aca es el problema');
+    
+    //console.log('llamado a subcategoria= '+ searchUrl);
+    
     return this.httpClient.get<GetResponseProductSubCategory>(searchUrl).pipe(
       map(response => response._embedded.productSubCategory)
     );
   }
   getProductSubCategries(): Observable<ProductSubcategory[]> {
-   
+    console.log('llamado a subcategoria');
     return this.httpClient.get<GetResponseProductSubCategory>(this.subCategoryUrl).pipe(
       map(response => response._embedded.productSubCategory)
     );
@@ -73,6 +86,12 @@ export class ProductService {
 interface GetResponse {
   _embedded: {
     products: Product[];
+  },
+  page:{
+    size:number,
+    totalElements:number,
+    totalPages:number,
+    number:number
   }
   
 }
