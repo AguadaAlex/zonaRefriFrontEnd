@@ -22,6 +22,8 @@ export class ProductListComponent implements OnInit {
   thePageSize: number = 3;
   theTotalElements: number = 0;
 
+  previousKeyword: string = "";
+
   constructor(private productService: ProductService,
               private route: ActivatedRoute) { }
 
@@ -48,17 +50,35 @@ export class ProductListComponent implements OnInit {
 
     const theKeyword: string = this.route.snapshot.paramMap.get('keyword')!;
 
-    // now search for the products using keyword
+    if (this.previousKeyword != theKeyword) {
+      this.thePageNumber = 1;
+    }
+
+
+    this.previousKeyword= theKeyword;
+
+    // BUSCAR PRODUCTOS USANDO keyword
     this.productService.searchProducts(theKeyword).subscribe(
       data => {
         this.products = data;
       }
     )
+
+
+
+
+    this.productService.searchProductsPaginate(this.thePageNumber - 1,
+      this.thePageSize,
+      theKeyword)
+      .subscribe(
+       this.processResult(), 
+         error => { console.error('Error al obtener productos:', error); }                                      
+      );
   }
 
   handleListProducts() {
 
-    // check if "id" parameter is available
+    // check SI "id" parameter ES VALIDO
     const hasCategoryId: boolean = this.route.snapshot.paramMap.has('id');
 
     if (hasCategoryId) {
@@ -90,18 +110,28 @@ export class ProductListComponent implements OnInit {
                                                this.thePageSize,
                                                this.currentCategoryId)
                                                .subscribe(
-                                                data => {
-                                                  if (data && data._embedded && data._embedded.products) 
-                                                    { this.products = data._embedded.products;
-                                                      this.thePageNumber = data.page.number + 1;
-                                                      this.thePageSize = data.page.size;
-                                                      this.theTotalElements = data.page.totalElements; } 
-                                                  else { 
-                                                    console.error('No se encontraron productos en la respuesta'); 
-                                                  }
-                                                  }, 
+                                                this.processResult(), 
                                                   error => { console.error('Error al obtener productos:', error); }                                      
                                                );
+  }
+
+  updatePageSize(pageSize:string){
+    this.thePageSize= +pageSize;
+    this.thePageNumber = 1;
+    this.listProducts();
+  }
+
+  processResult(){
+    return (data:any) => {
+      if (data && data._embedded && data._embedded.products) 
+        { this.products = data._embedded.products;
+          this.thePageNumber = data.page.number + 1;
+          this.thePageSize = data.page.size;
+          this.theTotalElements = data.page.totalElements; } 
+      else { 
+        console.error('No se encontraron productos en la respuesta'); 
+      }
+      }
   }
   
 }
