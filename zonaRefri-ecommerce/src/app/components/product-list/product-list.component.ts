@@ -3,6 +3,8 @@ import { ProductService } from '../../services/product.service';
 import { ProductSubcategory } from '../../common/product-subcategory';
 import { Product } from '../../common/product';
 import { ActivatedRoute } from '@angular/router';
+import { CartItem } from '../../common/cart-item';
+import { CartService } from '../../services/cart.service';
 
 
 @Component({
@@ -25,6 +27,7 @@ export class ProductListComponent implements OnInit {
   previousKeyword: string = "";
 
   constructor(private productService: ProductService,
+              private cartService: CartService,
               private route: ActivatedRoute) { }
 
   ngOnInit() {
@@ -129,9 +132,20 @@ export class ProductListComponent implements OnInit {
           this.thePageSize = data.page.size;
           this.theTotalElements = data.page.totalElements; } 
       else { 
-        console.error('No se encontraron productos en la respuesta'); 
+        console.error('No se encontraron productos en la respuesta');
+        this.products= [];
+        this.theTotalElements=0;
+        this.previousKeyword="";
       }
       }
+  }
+
+  addToCart(theProduct: Product){
+    console.log(`Agregar targeta=${theProduct.name},${theProduct.unitPrice}`);
+
+    //AQUI SE REALIZA EL TRABAJO REAL 
+    const theCartItem = new CartItem(theProduct);
+    this.cartService.addToCart(theCartItem);
   }
   
 }
