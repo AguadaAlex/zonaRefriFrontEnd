@@ -514,7 +514,7 @@ input.au-input.au-input-xl{
     background:#fff
 }
 .main-content.page-m{
-    padding:10% 15%!important
+    padding:10% 30% 10% 5%
 }
 
 /* 
@@ -783,6 +783,8 @@ footer ul li{
     padding:10px 20px
 }
 
+
+
 /* 
  * ----------------------------
  * Media Queries
@@ -1038,4 +1040,5 @@ footer ul li{
         border:0;
         padding:8px 0
     }
+
 }
