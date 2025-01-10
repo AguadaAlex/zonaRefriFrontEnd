@@ -4,6 +4,7 @@ import { ZonaRefriFormService } from '../../services/zona-refri-form.service';
 import { Country } from '../../common/country';
 import { State } from '../../common/state';
 import { ZonaRefriValidators } from '../../validators/zona-refri-validators';
+import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-checkout',
@@ -25,7 +26,8 @@ export class CheckoutComponent implements OnInit {
   billingAddressStates: State[] = [];
   
   constructor(private formBuilder: FormBuilder,
-              private zonaRefriFormService: ZonaRefriFormService
+              private zonaRefriFormService: ZonaRefriFormService,
+              private cartService: CartService
   ) {
     this.checkoutFormGroup = this.formBuilder.group({
       customer: this.formBuilder.group({
@@ -90,7 +92,20 @@ export class CheckoutComponent implements OnInit {
 
   ngOnInit(): void {
     
+    this.reviewCartDetails();
     
+  }
+  reviewCartDetails() {
+    //SUBSCRIBE A CART SERVICE TOTAL QUANTITY
+    this.cartService.totalQuantity.subscribe(
+      totalQuantity => this.totalQuantity = totalQuantity
+    );
+
+    //SUBSCRIBE A CART SERVICE TOTAL PRICE
+    this.cartService.totalPrice.subscribe(
+      totalPrice => this.totalPrice = totalPrice
+    );
+
   }
 
   get firstName(){ return this.checkoutFormGroup.get('customer.firstName');}
