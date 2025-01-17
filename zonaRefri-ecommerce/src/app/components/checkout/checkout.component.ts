@@ -5,6 +5,13 @@ import { Country } from '../../common/country';
 import { State } from '../../common/state';
 import { ZonaRefriValidators } from '../../validators/zona-refri-validators';
 import { CartService } from '../../services/cart.service';
+import { CheckoutService } from '../../services/checkout.service';
+import { Router } from '@angular/router';
+import { Order } from '../../common/order';
+import { OrderItem } from '../../common/order-item';
+import { Purchase } from '../../common/purchase';
+import { JsonPipe } from '@angular/common';
+import { response } from 'express';
 
 @Component({
   selector: 'app-checkout',
@@ -27,7 +34,9 @@ export class CheckoutComponent implements OnInit {
   
   constructor(private formBuilder: FormBuilder,
               private zonaRefriFormService: ZonaRefriFormService,
-              private cartService: CartService
+              private cartService: CartService,
+              private checkoutService: CheckoutService,
+              private router: Router
   ) {
     this.checkoutFormGroup = this.formBuilder.group({
       customer: this.formBuilder.group({
@@ -147,12 +156,82 @@ export class CheckoutComponent implements OnInit {
     if(this.checkoutFormGroup.invalid){
       this.checkoutFormGroup.markAllAsTouched();
     }
-    console.log(this.checkoutFormGroup.get('customer')?.value);
-    console.log("The email address is " + this.checkoutFormGroup.get('customer')?.value.email);
-    console.log("The shipping address country is " + this.checkoutFormGroup.get('shippingAddress')?.value.country.name);
-    console.log("The shipping address state is " + this.checkoutFormGroup.get('shippingAddress')?.value.state.name);
+
+    // setear orden 
+    let order = new Order();
+    order.totalPrice = this.totalPrice;
+    order.totalQuantity = this.totalQuantity;
+
+    // devolver tarjeta con items
+    const cartItems= this.cartService.cartItems;
+
+    // crear orden de items a base de tarjeta de items
+    /*
+    let orderItems: OrderItem[] = [];
+    for(let i=0; i < cartItems.length; i++){
+      orderItems[i] = new OrderItem(cartItems[i]);
+    }
+      */
 
 
+    let orderItems: OrderItem[] = cartItems.map(tempCartItem => new OrderItem(tempCartItem));
+    // setear compra
+
+    let purchase = new Purchase();
+
+    // publicar compra del cliente
+    purchase.customer = this.checkoutFormGroup.controls['customer'].value;
+    
+    
+    // publicar compra - dirección de envio
+    purchase.shippingAddress = this.checkoutFormGroup.controls['shippingAddress'].value;
+    const shippingState: State = JSON.parse(JSON.stringify(purchase.shippingAddress?.state));
+    const shippingCountry: Country = JSON.parse(JSON.stringify(purchase.shippingAddress?.country));
+    if (purchase.shippingAddress) { 
+      purchase.shippingAddress.state = shippingState.name; 
+      purchase.shippingAddress.country = shippingCountry.name;
+    }
+    // publicar compra - dirección de facturación 
+
+    purchase.billingAddress = this.checkoutFormGroup.controls['billingAddress'].value;
+    const billingState: State = JSON.parse(JSON.stringify(purchase.billingAddress?.state));
+    const billingCountry: Country = JSON.parse(JSON.stringify(purchase.billingAddress?.country));
+    if (purchase.billingAddress) { 
+      purchase.billingAddress.state = billingState.name; 
+      purchase.billingAddress.country = billingCountry.name;
+    }
+    // publicar compra - orden y orden item
+
+    purchase.order = order;
+    purchase.orderItems = orderItems;
+
+    // Llama a API rest via checkoutService
+
+    this.checkoutService.placeOrder(purchase).subscribe({
+      next: response => {
+        alert(`Your order has been received.\nOrder tracking number: ${response.orderTrackingNumber}`);
+
+        // reset cart
+        this.resetCart();
+
+      },
+      error: err => {
+        alert(`There was an error: ${err.message}`);
+      }
+    }
+  );
+
+
+  }
+  resetCart() {
+    // reset datos en la tarjeta 
+    this.cartService.cartItems = [];
+    this.cartService.totalPrice.next(0);
+    this.cartService.totalQuantity.next(0);
+    // reset formulario
+    this.checkoutFormGroup.reset();
+    // navegar atras en los productos de la pagina
+    this.router.navigateByUrl("/products");
   }
 
   handleMonthsAndYears(){
